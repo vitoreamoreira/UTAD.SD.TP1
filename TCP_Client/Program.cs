@@ -10,7 +10,7 @@ class Client
         string serverIP = Console.ReadLine();
 
         TcpClient client = new TcpClient(serverIP, 13000);
-        NetworkStream stream = client.GetStream();
+                NetworkStream stream = client.GetStream();
 
         Console.Write("Insira o seu ID: ");
         string id = Console.ReadLine();
@@ -37,7 +37,10 @@ class Client
                 stream.Write(message, 0, message.Length);
                 break;
             }
-        }
+            catch (SocketException e)
+            {
+                Console.WriteLine("SocketException: {0}", e);
+            }
 
         client.Close();
     }

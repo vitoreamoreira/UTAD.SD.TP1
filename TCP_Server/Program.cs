@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,13 +9,18 @@ class Server
     static void Main()
     {
         TcpListener server = new TcpListener(IPAddress.Any, 13000);
-        server.Start();
+            server.Start();
         Console.WriteLine("Servidor iniciado...");
 
-        while (true)
-        {
+            // Buffer for reading data
+            Byte[] bytes = new Byte[256];
+            String data = null;
+
+            // Enter the listening loop.
+            while (true)
+            {
             TcpClient client = server.AcceptTcpClient();
-            NetworkStream stream = client.GetStream();
+                NetworkStream stream = client.GetStream();
 
             byte[] buffer = new byte[client.ReceiveBufferSize];
             int data = stream.Read(buffer, 0, client.ReceiveBufferSize);
@@ -22,19 +28,22 @@ class Server
             Console.WriteLine("Mensagem recebida: " + clientMessage);
 
             if (clientMessage.StartsWith("START"))
-            {
+                {
                 string idCliente = clientMessage.Split('|')[1];
                 Console.WriteLine("ID do cliente: " + idCliente);
                 byte[] message = Encoding.ASCII.GetBytes("100 OK");
                 stream.Write(message, 0, message.Length);
-            }
+        }
             else if (clientMessage == "QUIT")
-            {
+        {
                 byte[] message = Encoding.ASCII.GetBytes("400 BYE");
                 stream.Write(message, 0, message.Length);
                 client.Close();
                 break;
-            }
+        }
+        finally
+        {
+            server.Stop();
         }
 
         server.Stop();

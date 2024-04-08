@@ -28,11 +28,20 @@ class Client
         {
             if (!hasID)
             {
-                Console.Write("Por favor, insira o seu ID: ");
+                Console.Write("Por favor, insira o seu ID (máximo de 3 dígitos numéricos): ");
                 clientID = Console.ReadLine();
-                byte[] idData = Encoding.ASCII.GetBytes(clientID);
-                stream.Write(idData, 0, idData.Length);
-                hasID = true;
+
+                // Verificar se o ID tem no máximo 3 dígitos numéricos
+                if (clientID.Length <= 3 && int.TryParse(clientID, out _))
+                {
+                    byte[] idData = Encoding.ASCII.GetBytes(clientID);
+                    stream.Write(idData, 0, idData.Length);
+                    hasID = true;
+                }
+                else
+                {
+                    Console.WriteLine("O ID deve conter no máximo 3 dígitos numéricos.");
+                }
             }
             else
             {

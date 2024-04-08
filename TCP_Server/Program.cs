@@ -37,8 +37,10 @@ class Server
             byte[] responseData = Encoding.ASCII.GetBytes(responseMessage);
             stream.Write(responseData, 0, responseData.Length);
 
-            data = new byte[1024];
-            bytes = 0;
+            // Recebendo o ID do cliente
+            bytes = stream.Read(data, 0, data.Length);
+            string clientID = Encoding.ASCII.GetString(data, 0, bytes);
+            Console.WriteLine("ID do Cliente: " + clientID);
 
             // Loop para ler os dados até que a conexão seja fechada pelo cliente
             while (true)
@@ -52,7 +54,6 @@ class Server
                         break;
                     }
                     message = Encoding.ASCII.GetString(data, 0, bytes);
-                    Console.WriteLine("ID do Cliente: " + message);
 
                     if (message.ToUpper() == "QUIT")
                     {
@@ -62,6 +63,7 @@ class Server
                         stream.Write(quitData, 0, quitData.Length);
                         break; // Encerra o loop e fecha a conexão
                     }
+
                 }
                 catch (IOException)
                 {
@@ -70,7 +72,6 @@ class Server
                 }
             }
         }
-
 
         stream.Close();
         client.Close();

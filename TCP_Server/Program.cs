@@ -3,73 +3,126 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using ExcelDataReader;
 
-class MyTcpListener
+class Server
 {
-    public static void Main()
+    static Mutex mutex = new Mutex();
+    //static string excelFilePath = @"Alocacao_Cliente_Servico.csv"; //arquivo CSV com as tarefas
+
+    static void Main()
     {
-        TcpListener server = null;
-        try
+        TcpListener server = new TcpListener(IPAddress.Parse("127.0.0.1"), 8888);
+        server.Start();
+        Console.WriteLine("Servidor iniciado...");
+
+        while (true)
         {
-            // Set the TcpListener on port 13000.
-            Int32 port = 13000;
-            IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+            TcpClient client = server.AcceptTcpClient();
+            Thread clientThread = new Thread(() => HandleClient(client));
+            clientThread.Start();
+        }
+    }
 
-            // TcpListener server = new TcpListener(port);
-            server = new TcpListener(localAddr, port);
+    static void HandleClient(TcpClient client)
+    {
+        NetworkStream stream = client.GetStream();
+        StreamReader reader = new StreamReader(stream);
+        StreamWriter writer = new StreamWriter(stream);
 
-            // Start listening for client requests.
-            server.Start();
+        byte[] data = new byte[1024];
+        int bytes = stream.Read(data, 0, data.Length);
+        string message = Encoding.ASCII.GetString(data, 0, bytes);
+        Console.WriteLine("Cliente " + message);
 
-            // Buffer for reading data
-            Byte[] bytes = new Byte[256];
-            String data = null;
+        if (message == "conectado")
+        {
+            string responseMessage = "100 OK";
+            byte[] responseData = Encoding.ASCII.GetBytes(responseMessage);
+            stream.Write(responseData, 0, responseData.Length);
 
-            // Enter the listening loop.
+            // Recebendo o ID do cliente
+            bytes = stream.Read(data, 0, data.Length);
+            string clientID = Encoding.ASCII.GetString(data, 0, bytes);
+            Console.WriteLine("ID do Cliente: " + clientID);
+
+            // Loop para ler os dados até que a conexão seja fechada pelo cliente
             while (true)
             {
-                Console.Write("Waiting for a connection... ");
-
-                // Perform a blocking call to accept requests.
-                // You could also use server.AcceptSocket() here.
-                using TcpClient client = server.AcceptTcpClient();
-                Console.WriteLine("Connected!");
-
-                data = null;
-
-                // Get a stream object for reading and writing
-                NetworkStream stream = client.GetStream();
-
-                int i;
-
-                // Loop to receive all the data sent by the client.
-                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                try
                 {
-                    // Translate data bytes to a ASCII string.
-                    data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                    Console.WriteLine("Received: {0}", data);
+                    bytes = stream.Read(data, 0, data.Length);
+                    if (bytes == 0)
+                    {
+                        // Se não houver mais dados para ler, encerra o loop
+                        break;
+                    }
+                    message = Encoding.ASCII.GetString(data, 0, bytes);
 
-                    // Process the data sent by the client.
-                    data = data.ToUpper();
+                    //if (message.ToUpper() == "ALOCACAO TAREFA")
+                    //{
+                    //    Console.WriteLine("Cliente solicitou uma tarefa.");
+                    //    // Ler a tarefa correspondente do arquivo csv
+                    //    string taskResponse = GetTaskFromCSV(clientID, excelFilePath);
+                    //    if (taskResponse != null)
+                    //    {
+                    //        // Enviar a tarefa para o cliente
+                    //        byte[] taskData = Encoding.ASCII.GetBytes(taskResponse);
+                    //        stream.Write(taskData, 0, taskData.Length);
+                    //}
+                        //else
+                        //{
+                        //    // Se não houver tarefa correspondente, envie uma mensagem indicando isso
+                        //    string noTaskMessage = "Não há tarefa atribuída para este cliente.";
+                        //    byte[] noTaskData = Encoding.ASCII.GetBytes(noTaskMessage);
+                        //    stream.Write(noTaskData, 0, noTaskData.Length);
+                        //}
+                    ////}
 
-                    byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-
-                    // Send back a response.
-                    stream.Write(msg, 0, msg.Length);
-                    Console.WriteLine("Sent: {0}", data);
+                    if (message.ToUpper() == "QUIT")
+                    {
+                        Console.WriteLine("Cliente solicitou encerramento da conexão.");
+                        string quitResponse = "400 BYE";
+                        byte[] quitData = Encoding.ASCII.GetBytes(quitResponse);
+                        stream.Write(quitData, 0, quitData.Length);
+                        break; // Encerra o loop e fecha a conexão
+                    }
+                }
+                catch (IOException)
+                {
+                    // Se ocorrer uma exceção de E/S, encerra o loop
+                    break;
                 }
             }
         }
-        catch (SocketException e)
+
+        stream.Close();
+        client.Close();
+    }
+
+    static string GetTaskFromCSV(string clientID, string filePath)
+    {
+        try
         {
-            Console.WriteLine("SocketException: {0}", e);
+            using (var reader = new StreamReader(filePath))
+            {
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+                    string[] fields = line.Split(',');
+                    if (fields.Length >= 2 && fields[0] == clientID)
+                    {
+                        return fields[1];
+                    }
+                }
+            }
         }
-        finally
+        catch (Exception ex)
         {
-            server.Stop();
+            Console.WriteLine("Erro ao ler o arquivo CSV: " + ex.Message);
         }
 
-        Console.WriteLine("\nHit enter to continue...");
-        Console.Read();
+        return null;
     }
 }

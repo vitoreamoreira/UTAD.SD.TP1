@@ -1,63 +1,77 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
+using System.Text;
 
-class Cliente
+class Client
 {
-    public static void Main(string[] args)
+    static void Main()
     {
-        Connect("127.0.0.1", "olaolaola");
-        static void Connect(String server, String message)
+        Console.Write("Por favor, insira o endereço IP do servidor: ");
+        string serverIP = Console.ReadLine();
+
+        TcpClient client = new TcpClient(serverIP, 8888);
+        NetworkStream stream = client.GetStream();
+
+        string message = "conectado";
+        byte[] data = Encoding.ASCII.GetBytes(message);
+        stream.Write(data, 0, data.Length);
+
+        data = new byte[1024];
+        int bytes = stream.Read(data, 0, data.Length);
+        string responseMessage = Encoding.ASCII.GetString(data, 0, bytes);
+        Console.WriteLine("Resposta do Servidor: " + responseMessage);
+
+        string clientID = "";
+        bool hasID = false;
+
+        while (true)
         {
-            try
+            if (!hasID)
             {
-                // Create a TcpClient.
-                // Note, for this client to work you need to have a TcpServer
-                // connected to the same address as specified by the server, port
-                // combination.
-                Int32 port = 13000;
+                Console.Write("Por favor, insira o seu ID (máximo de 7 dígitos): ");
+                clientID = Console.ReadLine();
 
-                // Prefer a using declaration to ensure the instance is Disposed later.
-                using TcpClient client = new TcpClient(server, port);
-
-                // Translate the passed message into ASCII and store it as a Byte array.
-                Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
-
-                // Get a client stream for reading and writing.
-                NetworkStream stream = client.GetStream();
-
-                // Send the message to the connected TcpServer.
-                stream.Write(data, 0, data.Length);
-
-                Console.WriteLine("Sent: {0}", message);
-
-                // Receive the server response.
-
-                // Buffer to store the response bytes.
-                data = new Byte[256];
-
-                // String to store the response ASCII representation.
-                String responseData = String.Empty;
-
-                // Read the first batch of the TcpServer response bytes.
-                Int32 bytes = stream.Read(data, 0, data.Length);
-                responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
-                Console.WriteLine("Received: {0}", responseData);
-
-                // Explicit close is not necessary since TcpClient.Dispose() will be
-                // called automatically.
-                // stream.Close();
-                // client.Close();
+                // Verificar se o ID tem no máximo 7 dígitos numéricos
+                if (clientID.Length <= 7)
+                {
+                    byte[] idData = Encoding.ASCII.GetBytes(clientID);
+                    stream.Write(idData, 0, idData.Length);
+                    hasID = true;
+                }
+                else
+                {
+                    Console.WriteLine("O ID deve conter no máximo 3 dígitos numéricos.");
+                }
             }
-            catch (ArgumentNullException e)
+            else
             {
-                Console.WriteLine("ArgumentNullException: {0}", e);
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
+                Console.Write("Digite 'ALOCACAO TAREFA' para solicitar uma tarefa ou 'QUIT' para sair: ");
+                string input = Console.ReadLine();
+                byte[] inputData = Encoding.ASCII.GetBytes(input);
+                stream.Write(inputData, 0, inputData.Length);
 
-            Console.WriteLine("\n Press Enter to continue...");
-            Console.Read();
+                if (input.ToUpper() == "QUIT")
+                {
+                    // Receber e exibir a resposta do servidor
+                    data = new byte[1024];
+                    bytes = stream.Read(data, 0, data.Length);
+                    string quitResponse = Encoding.ASCII.GetString(data, 0, bytes);
+                    Console.WriteLine("Resposta do servidor: " + quitResponse);
+                    break;
+                }
+                //else if (input.ToUpper() == "ALOCACAO TAREFA")
+                //    {
+                //        // Receber e exibir a resposta do servidor
+                //        data = new byte[1024];
+                //        bytes = stream.Read(data, 0, data.Length);
+                //        string taskResponse = Encoding.ASCII.GetString(data, 0, bytes);
+                //        Console.WriteLine("Resposta do servidor: " + taskResponse);
+                //        break;
+                //    }
+            }
         }
+
+        stream.Close();
+        client.Close();
     }
 }

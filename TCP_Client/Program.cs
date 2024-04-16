@@ -6,42 +6,72 @@ class Client
 {
     static void Main()
     {
-        Console.Write("Insira o endereço IP do servidor: ");
+        Console.Write("Por favor, insira o endereço IP do servidor: ");
         string serverIP = Console.ReadLine();
 
-        TcpClient client = new TcpClient(serverIP, 13000);
-                NetworkStream stream = client.GetStream();
+        TcpClient client = new TcpClient(serverIP, 8888);
+        NetworkStream stream = client.GetStream();
 
-        Console.Write("Insira o seu ID: ");
-        string id = Console.ReadLine();
-        byte[] message = Encoding.ASCII.GetBytes("START|" + id);
-        stream.Write(message, 0, message.Length);
+        string message = "conectado";
+        byte[] data = Encoding.ASCII.GetBytes(message);
+        stream.Write(data, 0, data.Length);
 
-        byte[] buffer = new byte[client.ReceiveBufferSize];
-        int data = stream.Read(buffer, 0, client.ReceiveBufferSize);
-        string serverMessage = Encoding.ASCII.GetString(buffer, 0, data);
-        Console.WriteLine("Mensagem recebida: " + serverMessage);
+        data = new byte[1024];
+        int bytes = stream.Read(data, 0, data.Length);
+        string responseMessage = Encoding.ASCII.GetString(data, 0, bytes);
+        Console.WriteLine("Resposta do Servidor: " + responseMessage);
 
-        if (serverMessage == "100 OK")
-        {
-            Console.WriteLine("Comunicação iniciada com sucesso!");
-        }
+        string clientID = "";
+        bool hasID = false;
 
         while (true)
         {
-            Console.WriteLine("Pressione 'Q' para sair ou 'C' para continuar...");
-            var key = Console.ReadKey();
-            if (key.KeyChar == 'Q' || key.KeyChar == 'q')
+            if (!hasID)
             {
-                message = Encoding.ASCII.GetBytes("QUIT");
-                stream.Write(message, 0, message.Length);
-                break;
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
+                Console.Write("Por favor, insira o seu ID (máximo de 7 dígitos): ");
+                clientID = Console.ReadLine();
 
+                // Verificar se o ID tem no máximo 7 dígitos numéricos
+                if (clientID.Length <= 7)
+                {
+                    byte[] idData = Encoding.ASCII.GetBytes(clientID);
+                    stream.Write(idData, 0, idData.Length);
+                    hasID = true;
+                }
+                else
+                {
+                    Console.WriteLine("O ID deve conter no máximo 3 dígitos numéricos.");
+                }
+            }
+            else
+            {
+                Console.Write("Digite 'ALOCACAO TAREFA' para solicitar uma tarefa ou 'QUIT' para sair: ");
+                string input = Console.ReadLine();
+                byte[] inputData = Encoding.ASCII.GetBytes(input);
+                stream.Write(inputData, 0, inputData.Length);
+
+                if (input.ToUpper() == "QUIT")
+                {
+                    // Receber e exibir a resposta do servidor
+                    data = new byte[1024];
+                    bytes = stream.Read(data, 0, data.Length);
+                    string quitResponse = Encoding.ASCII.GetString(data, 0, bytes);
+                    Console.WriteLine("Resposta do servidor: " + quitResponse);
+                    break;
+                }
+                //else if (input.ToUpper() == "ALOCACAO TAREFA")
+                //    {
+                //        // Receber e exibir a resposta do servidor
+                //        data = new byte[1024];
+                //        bytes = stream.Read(data, 0, data.Length);
+                //        string taskResponse = Encoding.ASCII.GetString(data, 0, bytes);
+                //        Console.WriteLine("Resposta do servidor: " + taskResponse);
+                //        break;
+                //    }
+            }
+        }
+
+        stream.Close();
         client.Close();
     }
 }

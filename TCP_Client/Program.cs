@@ -1,47 +1,61 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
 class Client
 {
-    static void Main()
+    public void StartClient(string serverIP, int port)
     {
-        Console.Write("Insira o endereço IP do servidor: ");
-        string serverIP = Console.ReadLine();
+        Console.Write("Enter your Client ID: ");
+        string clientId = Console.ReadLine();
 
-        TcpClient client = new TcpClient(serverIP, 13000);
-                NetworkStream stream = client.GetStream();
+        using TcpClient client = new TcpClient(serverIP, port);
+        using NetworkStream stream = client.GetStream();
+        using StreamReader reader = new StreamReader(stream, Encoding.ASCII);
+        using StreamWriter writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
 
-        Console.Write("Insira o seu ID: ");
-        string id = Console.ReadLine();
-        byte[] message = Encoding.ASCII.GetBytes("START|" + id);
-        stream.Write(message, 0, message.Length);
-
-        byte[] buffer = new byte[client.ReceiveBufferSize];
-        int data = stream.Read(buffer, 0, client.ReceiveBufferSize);
-        string serverMessage = Encoding.ASCII.GetString(buffer, 0, data);
-        Console.WriteLine("Mensagem recebida: " + serverMessage);
-
-        if (serverMessage == "100 OK")
+        try
         {
-            Console.WriteLine("Comunicação iniciada com sucesso!");
+            // Receiving the initial server response
+            string serverResponse = reader.ReadLine();
+            Console.WriteLine($"Server says: {serverResponse}");
+
+            // Sending client ID to server
+            writer.WriteLine($"ID {clientId}");
+
+            // Main client loop
+            string userInput;
+            do
+            {
+                Console.WriteLine("Enter command (COMPLETE TASK <task_id>, REQUEST TASK, QUIT to exit): ");
+                userInput = Console.ReadLine();
+                writer.WriteLine(userInput);
+
+                if (userInput != "QUIT")
+                {
+                    serverResponse = reader.ReadLine();
+                    Console.WriteLine($"Server says: {serverResponse}");
+                }
+            } while (userInput != "QUIT");
+
+            // Expecting the server's final response
+            serverResponse = reader.ReadLine();
+            Console.WriteLine($"Server says: {serverResponse}");
         }
-
-        while (true)
+        catch (Exception ex)
         {
-            Console.WriteLine("Pressione 'Q' para sair ou 'C' para continuar...");
-            var key = Console.ReadKey();
-            if (key.KeyChar == 'Q' || key.KeyChar == 'q')
-            {
-                message = Encoding.ASCII.GetBytes("QUIT");
-                stream.Write(message, 0, message.Length);
-                break;
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
+    }
 
-        client.Close();
+    static void Main(string[] args)
+    {
+        Console.Write("Enter the server IP address: ");
+        string serverIP = Console.ReadLine();
+        int port = 12345; // A mesma porta usada no servidor
+
+        Client client = new Client();
+        client.StartClient(serverIP, port);
     }
 }

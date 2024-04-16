@@ -28,11 +28,11 @@ class Client
         {
             if (!hasID)
             {
-                Console.Write("Por favor, insira o seu ID (máximo de 3 dígitos numéricos): ");
+                Console.Write("Por favor, insira o seu ID (máximo de 7 dígitos): ");
                 clientID = Console.ReadLine();
 
-                // Verificar se o ID tem no máximo 3 dígitos numéricos
-                if (clientID.Length <= 3 && int.TryParse(clientID, out _))
+                // Verificar se o ID tem no máximo 7 dígitos numéricos
+                if (clientID.Length <= 7)
                 {
                     byte[] idData = Encoding.ASCII.GetBytes(clientID);
                     stream.Write(idData, 0, idData.Length);
@@ -45,7 +45,7 @@ class Client
             }
             else
             {
-                Console.Write("Digite 'QUIT' para sair: ");
+                Console.Write("Digite 'ALOCACAO TAREFA' para solicitar uma tarefa ou 'QUIT' para sair: ");
                 string input = Console.ReadLine();
                 byte[] inputData = Encoding.ASCII.GetBytes(input);
                 stream.Write(inputData, 0, inputData.Length);
@@ -59,6 +59,15 @@ class Client
                     Console.WriteLine("Resposta do servidor: " + quitResponse);
                     break;
                 }
+                //else if (input.ToUpper() == "ALOCACAO TAREFA")
+                //    {
+                //        // Receber e exibir a resposta do servidor
+                //        data = new byte[1024];
+                //        bytes = stream.Read(data, 0, data.Length);
+                //        string taskResponse = Encoding.ASCII.GetString(data, 0, bytes);
+                //        Console.WriteLine("Resposta do servidor: " + taskResponse);
+                //        break;
+                //    }
             }
         }
 

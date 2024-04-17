@@ -65,7 +65,7 @@ namespace TCP_Server
                     {
                         if (clientId == null)
                         {
-                            writer.WriteLine("Erro: ID de cliente não informado.");
+                            writer.WriteLine("Erro: ID de cliente nao informado.");
                         }
                         else
                         {
@@ -77,7 +77,7 @@ namespace TCP_Server
                     {
                         if (clientId == null)
                         {
-                            writer.WriteLine("Erro: ID de cliente não informado.");
+                            writer.WriteLine("Erro: ID de cliente nao informado.");
                         }
                         else
                         {
@@ -168,7 +168,7 @@ namespace TCP_Server
                             insertCommand.Parameters.AddWithValue("@clientId", clientId);
                             insertCommand.Parameters.AddWithValue("@serviceId", serviceId);
                             insertCommand.ExecuteNonQuery();
-                            return $"Novo cliente {clientId} registrado no serviço {serviceId}.";
+                            return $"Novo cliente {clientId} registado no serviço {serviceId}.";
                         }
                     }
                     else
@@ -220,54 +220,71 @@ namespace TCP_Server
                 {
                     connection.Open();
 
-                    // Verifica se o cliente já tem uma tarefa em curso
-                    string checkTask = "SELECT ID_Tarefa FROM Servicos WHERE ID_Cliente = @clientId AND Estado = 'Em curso'";
-                    using (SqlCommand cmdCheck = new SqlCommand(checkTask, connection))
+                    // Verificar se o cliente já tem uma tarefa em curso
+                    string checkTaskQuery = "SELECT ID_Tarefa FROM Servicos WHERE ID_Cliente = @clientId AND Estado = 'Em curso'";
+                    using (SqlCommand checkTaskCommand = new SqlCommand(checkTaskQuery, connection))
                     {
-                        cmdCheck.Parameters.AddWithValue("@clientId", clientId);
-                        object existingTaskId = cmdCheck.ExecuteScalar();
+                        checkTaskCommand.Parameters.AddWithValue("@clientId", clientId);
+                        object existingTaskId = checkTaskCommand.ExecuteScalar();
                         if (existingTaskId != null)
                         {
-                            return $"Voce ja esta alocado a tarefa {existingTaskId} e deve conclui-la antes de receber uma nova.";
+                            return $"Voce ja esta alocado na tarefa {existingTaskId} e deve conclui-la antes de receber uma nova.";
                         }
                     }
 
-                    // Alocar uma nova tarefa
-                    string sql = @"
-                SELECT TOP 1 ID_Tarefa, Descricao 
-                FROM Servicos 
-                WHERE Estado = 'Nao alocado' 
-                ORDER BY NEWID()";
-                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    // Continua a lógica para alocar uma nova tarefa ao cliente que não tem tarefa em curso.
+                    // Primeiro, obtemos o serviço do cliente.
+                    string getServiceQuery = "SELECT ID_Servico FROM Cliente WHERE ID_Cliente = @clientId";
+                    using (SqlCommand getServiceCommand = new SqlCommand(getServiceQuery, connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        getServiceCommand.Parameters.AddWithValue("@clientId", clientId);
+                        var serviceId = getServiceCommand.ExecuteScalar();
+                        if (serviceId == null)
                         {
-                            if (reader.Read())
-                            {
-                                string taskId = reader["ID_Tarefa"].ToString();
-                                string description = reader["Descricao"].ToString();
+                            return "Erro: Cliente nao registado em nenhum serviço.";
+                        }
 
-                                // Marcar a tarefa como em curso
-                                reader.Close();
-                                string updateTask = @"
-                            UPDATE Servicos 
-                            SET Estado = 'Em curso', ID_Cliente = @clientId 
-                            WHERE ID_Tarefa = @taskId";
-                                using (SqlCommand updateCommand = new SqlCommand(updateTask, connection))
-                                {
-                                    updateCommand.Parameters.AddWithValue("@clientId", clientId);
-                                    updateCommand.Parameters.AddWithValue("@taskId", taskId);
-                                    updateCommand.ExecuteNonQuery();
-                                }
-                                return $"Tarefa alocada: {taskId} - {description}";
-                            }
-                            else
+                        // Buscamos uma tarefa não alocada nesse serviço específico.
+                        string getTaskQuery = @"
+                    SELECT TOP 1 ID_Tarefa, Descricao 
+                    FROM Servicos 
+                    WHERE Estado = 'Nao alocado' AND ID_Servico = @serviceId
+                    ORDER BY NEWID()";
+                        using (SqlCommand getTaskCommand = new SqlCommand(getTaskQuery, connection))
+                        {
+                            getTaskCommand.Parameters.AddWithValue("@serviceId", serviceId);
+                            using (SqlDataReader taskReader = getTaskCommand.ExecuteReader())
                             {
-                                return "Nenhuma tarefa disponivel para alocacao.";
+                                if (taskReader.Read())
+                                {
+                                    string taskId = taskReader["ID_Tarefa"].ToString();
+                                    string taskDescription = taskReader["Descricao"].ToString();
+
+                                    taskReader.Close();
+                                    string updateTaskQuery = @"
+                                UPDATE Servicos 
+                                SET Estado = 'Em curso', ID_Cliente = @clientId 
+                                WHERE ID_Tarefa = @taskId";
+                                    using (SqlCommand updateTaskCommand = new SqlCommand(updateTaskQuery, connection))
+                                    {
+                                        updateTaskCommand.Parameters.AddWithValue("@clientId", clientId);
+                                        updateTaskCommand.Parameters.AddWithValue("@taskId", taskId);
+                                        updateTaskCommand.ExecuteNonQuery();
+                                    }
+                                    return $"Tarefa {taskId} - {taskDescription} foi alocada para você.";
+                                }
+                                else
+                                {
+                                    return "Nenhuma tarefa disponível para o seu serviço.";
+                                }
                             }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                return $"Erro ao alocar tarefa: {ex.Message}";
             }
             finally
             {

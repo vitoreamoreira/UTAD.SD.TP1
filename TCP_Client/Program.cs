@@ -30,18 +30,50 @@ class Client
 
         // Main loop cliente
         string userInput;
+        string command = string.Empty;
+
         do
         {
-            Console.Write("Enter command (COMPLETE TASK, REQUEST TASK, QUIT to exit): ");
+            Console.WriteLine("\nMenu:");
+            Console.WriteLine("1 - Request Task");
+            Console.WriteLine("2 - Complete Task");
+            Console.WriteLine("9 - Quit");
+            Console.Write("Enter your choice or command: ");
             userInput = Console.ReadLine();
-            writer.WriteLine(userInput);
 
-            if (!userInput.Equals("QUIT", StringComparison.OrdinalIgnoreCase))
+            // Converte a entrada para maiúsculas para a comparação
+            string upperInput = userInput.ToUpper();
+
+            // Traduzir números para comandos ou usar entrada diretamente se for um comando.
+            switch (upperInput)
+            {
+                case "1":
+                    command = "REQUEST TASK";
+                    break;
+                case "2":
+                    command = "COMPLETE TASK";
+                    break;
+                case "9":
+                case "QUIT":
+                    command = "QUIT";
+                    break;
+                case "REQUEST TASK":
+                case "COMPLETE TASK":
+                    command = upperInput;
+                    break;
+                default:
+                    Console.WriteLine("Escolha ou comando invalido. Por favor tente novamente.");
+                    continue;
+            }
+
+            writer.WriteLine(command);
+
+            if (!command.Equals("QUIT", StringComparison.OrdinalIgnoreCase))
             {
                 serverResponse = reader.ReadLine();
                 Console.WriteLine($"Server says: {serverResponse}");
             }
-        } while (!userInput.Equals("QUIT", StringComparison.OrdinalIgnoreCase));
+        } while (!command.Equals("QUIT", StringComparison.OrdinalIgnoreCase));
 
         // Resposta final do servidor
         serverResponse = reader.ReadLine();

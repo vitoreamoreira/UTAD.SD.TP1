@@ -25,6 +25,8 @@ namespace TCP_Server
                 while (true)
                 {
                     TcpClient client = listener.AcceptTcpClient();
+
+                    // Inicia a thread do cliente para lidar com interações subsequentes
                     Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClient));
                     clientThread.Start(client);
                 }
@@ -42,13 +44,14 @@ namespace TCP_Server
             StreamReader reader = new StreamReader(stream, Encoding.ASCII);
             StreamWriter writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
 
-            string clientId = null;
-
-            writer.WriteLine("100 OK");
             try
             {
+                // Envia "100 OK" assim que a conexão for aceite
+                writer.WriteLine("100 OK");
+
+                string clientId = null;
                 string line;
-                while ((line = reader.ReadLine()) != null && line != "QUIT")
+                while ((line = reader.ReadLine()) != null && !line.Equals("QUIT", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine($"Received: {line}");
 
@@ -62,7 +65,7 @@ namespace TCP_Server
                     {
                         if (clientId == null)
                         {
-                            writer.WriteLine("Erro: ID de cliente nao informado.");
+                            writer.WriteLine("Erro: ID de cliente não informado.");
                         }
                         else
                         {
@@ -74,7 +77,7 @@ namespace TCP_Server
                     {
                         if (clientId == null)
                         {
-                            writer.WriteLine("Erro: ID de cliente nao informado.");
+                            writer.WriteLine("Erro: ID de cliente não informado.");
                         }
                         else
                         {
@@ -92,6 +95,10 @@ namespace TCP_Server
             }
             finally
             {
+                // Certifica-se de que todos os recursos sejam libertados
+                reader.Close();
+                writer.Close();
+                stream.Close();
                 client.Close();
             }
         }
@@ -113,12 +120,12 @@ namespace TCP_Server
 
                         if (serviceId != null)
                         {
-                            // O cliente já está registrado.
+                            // O cliente já está registrado
                             response = $"O Cliente esta registado no Servico {serviceId}.";
                         }
                         else
                         {
-                            // O cliente é novo, então registre e associe a um serviço.
+                            // O cliente é novo, então regista e associa a um serviço
                             response = RegisterNewClient(clientId);
                         }
                     }
@@ -213,7 +220,7 @@ namespace TCP_Server
                 {
                     connection.Open();
 
-                    // Verificar se o cliente já tem uma tarefa em curso
+                    // Verifica se o cliente já tem uma tarefa em curso
                     string checkTask = "SELECT ID_Tarefa FROM Servicos WHERE ID_Cliente = @clientId AND Estado = 'Em curso'";
                     using (SqlCommand cmdCheck = new SqlCommand(checkTask, connection))
                     {
@@ -273,7 +280,7 @@ namespace TCP_Server
     {
         static void Main(string[] args)
         {
-            int port = 12345; // Ajuste a porta conforme necessário
+            int port = 12345;
             Server server = new Server();
             server.StartServer(port);
         }

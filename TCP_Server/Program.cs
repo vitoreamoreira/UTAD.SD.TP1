@@ -46,14 +46,13 @@ namespace TCP_Server
 
             try
             {
-                // Envia "100 OK" assim que a conexão for aceite
-                writer.WriteLine("100 OK");
+                writer.WriteLine("100 OK");  // Confirmação inicial de conexão
 
                 string clientId = null;
                 string line;
-                while ((line = reader.ReadLine()) != null && !line.Equals("QUIT", StringComparison.OrdinalIgnoreCase))
+                while ((line = reader.ReadLine()) != null && !line.Equals("SAIR", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine($"Received: {line}");
+                    Console.WriteLine($"Recebeu: {line}");
 
                     if (line.StartsWith("ID"))
                     {
@@ -61,11 +60,11 @@ namespace TCP_Server
                         string response = EnsureClientRegistered(clientId);
                         writer.WriteLine(response);
                     }
-                    else if (line.ToLower().Equals("complete task"))
+                    else if (line.ToLower().Equals("completar tarefa"))
                     {
                         if (clientId == null)
                         {
-                            writer.WriteLine("Erro: ID de cliente nao informado.");
+                            writer.WriteLine("Erro: ID de cliente não informado.");
                         }
                         else
                         {
@@ -73,11 +72,11 @@ namespace TCP_Server
                             writer.WriteLine(response);
                         }
                     }
-                    else if (line.ToLower().Equals("request task"))
+                    else if (line.ToLower().Equals("requisitar tarefa"))
                     {
                         if (clientId == null)
                         {
-                            writer.WriteLine("Erro: ID de cliente nao informado.");
+                            writer.WriteLine("Erro: ID de cliente não informado.");
                         }
                         else
                         {
@@ -86,7 +85,13 @@ namespace TCP_Server
                         }
                     }
                 }
-                writer.WriteLine("400 BYE");
+
+                if (line != null && line.Equals("SAIR", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"Recebeu: QUIT");
+                    Console.WriteLine($"O cliente {clientId} solicitou desconexão.");
+                    writer.WriteLine("400 BYE");  // Resposta ao comando QUIT
+                }
             }
             catch (Exception ex)
             {
@@ -95,7 +100,7 @@ namespace TCP_Server
             }
             finally
             {
-                // Certifica-se de que todos os recursos sejam libertados
+                // Fechamento dos recursos e encerramento da conexão
                 reader.Close();
                 writer.Close();
                 stream.Close();
@@ -121,7 +126,7 @@ namespace TCP_Server
                         if (serviceId != null)
                         {
                             // O cliente já está registrado
-                            response = $"O Cliente esta registado no Servico {serviceId}.";
+                            response = $"O cliente esta registado no Servico {serviceId}.";
                         }
                         else
                         {
@@ -168,7 +173,7 @@ namespace TCP_Server
                             insertCommand.Parameters.AddWithValue("@clientId", clientId);
                             insertCommand.Parameters.AddWithValue("@serviceId", serviceId);
                             insertCommand.ExecuteNonQuery();
-                            return $"Novo cliente {clientId} registado no serviço {serviceId}.";
+                            return $"Novo cliente ID:{clientId} registado no servico {serviceId}.";
                         }
                     }
                     else
@@ -200,7 +205,7 @@ namespace TCP_Server
                         }
                         else
                         {
-                            return "Voce nao tem tarefas em curso ou ja foram concluidas.";
+                            return "O cliente nao tem tarefas em curso ou ja foram concluidas.";
                         }
                     }
                 }
@@ -228,7 +233,7 @@ namespace TCP_Server
                         object existingTaskId = checkTaskCommand.ExecuteScalar();
                         if (existingTaskId != null)
                         {
-                            return $"Voce ja esta alocado na tarefa {existingTaskId} e deve conclui-la antes de receber uma nova.";
+                            return $"O cliente ja esta alocado na tarefa {existingTaskId} e deve conclui-la antes de receber uma nova.";
                         }
                     }
 
@@ -241,7 +246,7 @@ namespace TCP_Server
                         var serviceId = getServiceCommand.ExecuteScalar();
                         if (serviceId == null)
                         {
-                            return "Erro: Cliente nao registado em nenhum serviço.";
+                            return "Erro: Cliente nao registado em nenhum servico.";
                         }
 
                         // Buscamos uma tarefa não alocada nesse serviço específico.
@@ -271,11 +276,11 @@ namespace TCP_Server
                                         updateTaskCommand.Parameters.AddWithValue("@taskId", taskId);
                                         updateTaskCommand.ExecuteNonQuery();
                                     }
-                                    return $"Tarefa {taskId} - {taskDescription} foi alocada para você.";
+                                    return $"A tarefa {taskId} - {taskDescription} foi alocada ao cliente.";
                                 }
                                 else
                                 {
-                                    return "Nenhuma tarefa disponível para o seu serviço.";
+                                    return "Nenhuma tarefa disponivel para o seu serviço.";
                                 }
                             }
                         }

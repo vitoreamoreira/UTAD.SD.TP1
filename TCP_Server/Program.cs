@@ -151,7 +151,7 @@ namespace TCP_Server
                         if (serviceId != null)
                         {
                             // O cliente já está registrado
-                            response = $"O cliente esta registado no Servico {serviceId}.";
+                            response = $"O cliente esta registado no servico {serviceId}.";
                         }
                         else
                         {
@@ -230,7 +230,7 @@ namespace TCP_Server
                         int result = command.ExecuteNonQuery();
                         if (result > 0)
                         {
-                            return "Sua tarefa foi concluida com sucesso.";
+                            return "A sua tarefa foi concluida com sucesso, pode iniciar um nova tarefa.";
                         }
                         else
                         {
@@ -311,7 +311,7 @@ namespace TCP_Server
                                 }
                                 else
                                 {
-                                    return "Nenhuma tarefa disponivel para o seu serviço.";
+                                    return "Nenhuma tarefa disponivel para o seu servico.";
                                 }
                             }
                         }

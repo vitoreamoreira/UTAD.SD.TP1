@@ -28,7 +28,7 @@ class Client
             string userInput;
             do
             {
-                Console.WriteLine("Enter command (COMPLETE TASK <task_id>, REQUEST TASK, QUIT to exit): ");
+                Console.WriteLine("Enter command (COMPLETE TASK, REQUEST TASK, QUIT to exit): ");
                 userInput = Console.ReadLine();
                 writer.WriteLine(userInput);
 

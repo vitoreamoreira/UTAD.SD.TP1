@@ -10,56 +10,76 @@ namespace TCP_Server
 {
     class Server
     {
+        // Ouvinte TCP para aceitar conexões de clientes
         private TcpListener listener;
+        // Mutex para controlar o acesso a recursos compartilhados entre threads
         private static Mutex mutex = new Mutex();
+        // String de conexão para a base de dados SQL Server
         private string connectionString = "Server=MEEP_P\\SQLEXPRESS;Database=Sistemas_Distribuidos;Integrated Security=True;";
 
+        // Método que inicia o servidor para escutar por conexões entrantes
         public void StartServer(int port)
         {
+            // Inicializa o TcpListener para escutar em qualquer endereço IP e na porta especificada
             listener = new TcpListener(IPAddress.Any, port);
             listener.Start();
             Console.WriteLine("Servidor iniciado...");
 
             try
             {
+                // Loop infinito para aceitar e processar conexões de clientes
                 while (true)
                 {
+                    // Aceita uma conexão de cliente pendente
                     TcpClient client = listener.AcceptTcpClient();
 
-                    // Inicia a thread do cliente para lidar com interações subsequentes
+                    // Inicia uma thread separada para cada cliente, permitindo múltiplas conexões
                     Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClient));
                     clientThread.Start(client);
                 }
             }
             finally
             {
-                listener.Stop();
+                listener.Stop(); // Fecha o ouvinte quando o servidor termina
             }
         }
 
+        // Método que gerencia a comunicação com o cliente conectado
         private void HandleClient(object clientObj)
         {
+            // Converte o objeto passado para TcpClient
             TcpClient client = (TcpClient)clientObj;
+            // Obtém o fluxo de rede associado ao cliente para enviar e receber dados
             NetworkStream stream = client.GetStream();
+            // Lê dados do fluxo de rede
             StreamReader reader = new StreamReader(stream, Encoding.ASCII);
+            // Escreve dados no fluxo de rede
             StreamWriter writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
 
             try
             {
                 writer.WriteLine("100 OK");  // Confirmação inicial de conexão
 
-                string clientId = null;
-                string line;
+                string clientId = null; // Declara a variável que armazenará o ID do cliente
+                string line; // Declara a variável que armazenará as linhas de texto recebidas
+
+                // Loop para ler linhas de texto enviadas pelo cliente
                 while ((line = reader.ReadLine()) != null && !line.Equals("SAIR", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Imprime a linha recebida na consola do servidor
                     Console.WriteLine($"Recebeu: {line}");
 
+                    // Trata a linha de acordo com o seu conteúdo (comandos)
+                    // Se começar com "ID", tratar a identificação do cliente
                     if (line.StartsWith("ID"))
                     {
+                        // Extrai o ID do cliente da linha
                         clientId = line.Split(' ')[1];
+                        // Verifica e/ou regista o cliente, retornando uma resposta apropriada
                         string response = EnsureClientRegistered(clientId);
-                        writer.WriteLine(response);
+                        writer.WriteLine(response);// Envia a resposta ao cliente
                     }
+                    // Se for "completar tarefa", invoca a lógica de completar a tarefa
                     else if (line.ToLower().Equals("completar tarefa"))
                     {
                         if (clientId == null)
@@ -68,10 +88,12 @@ namespace TCP_Server
                         }
                         else
                         {
+                            // Completa a tarefa do cliente e retorna uma resposta
                             string response = CompleteTask(clientId);
                             writer.WriteLine(response);
                         }
                     }
+                    // Se for "requisitar tarefa", invoca a lógica de alocar uma nova tarefa
                     else if (line.ToLower().Equals("requisitar tarefa"))
                     {
                         if (clientId == null)
@@ -80,12 +102,13 @@ namespace TCP_Server
                         }
                         else
                         {
+                            // Aloca uma nova tarefa ao cliente e retorna uma resposta
                             string response = AllocateTask(clientId);
                             writer.WriteLine(response);
                         }
                     }
                 }
-
+                // Se o comando for "SAIR", imprime na consola do servidor e envia resposta ao cliente
                 if (line != null && line.Equals("SAIR", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine($"Recebeu: QUIT");
@@ -100,7 +123,7 @@ namespace TCP_Server
             }
             finally
             {
-                // Fechamento dos recursos e encerramento da conexão
+                // Fecha todos os recursos de rede associados ao cliente
                 reader.Close();
                 writer.Close();
                 stream.Close();
@@ -108,6 +131,8 @@ namespace TCP_Server
             }
         }
 
+        // Método que verifica se o cliente está registado e, se não, regista-o
+        // Retorna uma string que contém o resultado da verificação ou do registo
         private string EnsureClientRegistered(string clientId)
         {
             mutex.WaitOne();
@@ -148,7 +173,8 @@ namespace TCP_Server
             return response;
         }
 
-
+        // Método que regista um novo cliente na base de dados
+        // Retorna uma string que contém o resultado do registo
         private string RegisterNewClient(string clientId)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -183,6 +209,9 @@ namespace TCP_Server
                 }
             }
         }
+
+        // Método que completa a tarefa do cliente e atualiza o seu estado na base de dados
+        // Retorna uma string que contém o resultado da operação
         private string CompleteTask(string clientId)
         {
             mutex.WaitOne();
@@ -216,6 +245,8 @@ namespace TCP_Server
             }
         }
 
+        // Método que aloca uma nova tarefa ao cliente
+        // Retorna uma string que contém o resultado da alocação
         private string AllocateTask(string clientId)
         {
             mutex.WaitOne();
@@ -249,7 +280,7 @@ namespace TCP_Server
                             return "Erro: Cliente nao registado em nenhum servico.";
                         }
 
-                        // Buscamos uma tarefa não alocada nesse serviço específico.
+                        // Procuramos uma tarefa não alocada nesse serviço específico.
                         string getTaskQuery = @"
                     SELECT TOP 1 ID_Tarefa, Descricao 
                     FROM Servicos 
@@ -298,11 +329,13 @@ namespace TCP_Server
         }
     }
 
+    // Ponto de entrada principal do programa
     class Program
     {
         static void Main(string[] args)
         {
-            int port = 12345;
+            int port = 12345; // Porta definida para a comunicação TCP
+            // Instanciação do servidor e início da escuta por conexões
             Server server = new Server();
             server.StartServer(port);
         }

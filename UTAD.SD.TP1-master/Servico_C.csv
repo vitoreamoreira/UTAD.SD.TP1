@@ -1,0 +1,26 @@
+TarefaID,Descricao,Estado,ClienteID
+SC_T1,Entrega de correspondência no bairro residencial,Em curso,Cl_0039 
+SC_T2,Coleta de encomendas na central de distribuição,Nao alocado, 
+SC_T3,Entrega urgente no centro da cidade,Concluido,Cl_0040 
+SC_T4,Rota de entrega de pacotes na zona industrial,Nao alocado, 
+SC_T5,Distribuição de jornais no centro histórico,Concluido,Cl_0041 
+SC_T6,Entrega de faturas em empresas,Em curso,Cl_0042 
+SC_T7,Coleta de cartas em caixas de correio,Concluido,Cl_0043 
+SC_T8,Entrega de convites para eventos sociais,Nao alocado, 
+SC_T9,Entrega de mercadorias em lojas de conveniência,Concluido,Cl_0044 
+SC_T10,Distribuição de revistas em bancas de jornais,Em curso,Cl_0045 
+SC_T11,Entrega de documentos importantes em escritórios de advocacia,Concluido,Cl_0046 
+SC_T12,Coleta de pacotes em armazéns de distribuição,Em curso,Cl_0047 
+SC_T13,Entrega de encomendas em domicílios particulares,Nao alocado, 
+SC_T14,Distribuição de catálogos em áreas residenciais,Concluido,Cl_0048 
+SC_T15,Entrega de amostras grátis em pontos de recolha,Em curso,Cl_0049 
+SC_T16,Coleta de encomendas devolvidas em lojas online,Concluido,Cl_0050 
+SC_T17,Entrega de pacotes em apartamentos,Em curso,Cl_0051 
+SC_T18,Distribuição de panfletos publicitários em áreas comerciais,Concluido,Cl_0052
+SC_T19,Entrega de convocações judiciais em tribunais,Em curso,Cl_0053 
+SC_T20,Coleta de produtos vendidos em mercado online,Concluido,Cl_0054 
+SC_T21,Entrega de compras feitas em comércios eletrônicos,Em curso,Cl_0055 
+SC_T22,Distribuição de publicações científicas em universidades,Concluido,Cl_0056 
+SC_T23,Entrega de produtos de supermercado em residências,Em curso,Cl_0057 
+SC_T24,Coleta de correspondência em empresas de logística,Concluido,Cl_0058
+SC_T25,Entrega de presentes em ocasiões especiais,Em curso,Cl_0059

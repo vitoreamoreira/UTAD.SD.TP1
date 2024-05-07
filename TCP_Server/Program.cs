@@ -15,7 +15,7 @@ namespace TCP_Server
         // Mutex para controlar o acesso a recursos compartilhados entre threads
         private static Mutex mutex = new Mutex();
         // String de conexão para a base de dados SQL Server
-        private string connectionString = "Server=MEEP_P\\SQLEXPRESS;Database=Sistemas_Distribuidos;Integrated Security=True;";
+        private string connectionString = "Server=LAPTOP-E2MAUDGA;Database=Sistemas_Distribuidos;Integrated Security=True;";
 
         // Método que inicia o servidor para escutar por conexões entrantes
         public void StartServer(int port)

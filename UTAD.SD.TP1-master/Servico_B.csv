@@ -1,0 +1,26 @@
+TarefaID,Descricao,Estado,ClienteID
+SB_T1,Ronda de segurança na zona sul da cidade,Em curso,Cl_0018 
+SB_T2,Inspeção de hidrantes na zona norte da cidade,Nao alocado, 
+SB_T3,Simulação de resgate no parque da cidade,Concluido,Cl_0019 
+SB_T4,Patrulhamento noturno no centro da cidade,Nao alocado, 
+SB_T5,Verificação de extintores em estabelecimentos comerciais,Concluido,Cl_0020 
+SB_T6,Monitorização de risco de incêndio em áreas florestais,Nao alocado, 
+SB_T7,Resgate em edifício em caso de incêndio,Em curso,Cl_0021
+ SB_T8,Inspeção de sistemas de alarme em residências,Concluido,Cl_0022 
+SB_T9,Ronda de prevenção de incêndios em armazéns industriais,Nao alocado, 
+SB_T10,Simulação de evacuação em escola primária,Concluido,Cl_0023 
+SB_T11,Inspeção de equipamentos de proteção civil,Em curso,Cl_0024 
+SB_T12,Patrulha de vigilância em áreas de risco,Concluido,Cl_0025 
+SB_T13,Resgate em rio durante cheia,Em curso,Cl_0026 
+SB_T14,Simulação de incêndio em fábrica abandonada,Concluido,Cl_0027 
+SB_T15,Inspeção de acessos de emergência em condomínios residenciais,Em curso,Cl_0028 
+SB_T16,Ronda de segurança em eventos públicos,Concluido,Cl_0029 
+SB_T17,Verificação de sistemas de detecção de fumo em escritórios,Em curso,Cl_0030 
+SB_T18,Resgate em montanha durante caminhada,Concluido,Cl_0031 
+SB_T19,Simulação de incêndio em hotel,Em curso,Cl_0032 
+SB_T20,Patrulha noturna em zonas de lazer,Concluido,Cl_0033 
+SB_T21,Inspeção de saídas de emergência em cinemas,Em curso,Cl_0034 
+SB_T22,Ronda de prevenção de incêndios em zona industrial,Concluido,Cl_0035 
+SB_T23,Simulação de incêndio em área residencial,Em curso,Cl_0036 
+SB_T24,Patrulha de segurança em parques de campismo,Concluido,Cl_0037 
+SB_T25,Resgate em acidente de viação,Em curso,Cl_0038

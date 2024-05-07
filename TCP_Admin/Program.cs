@@ -3,10 +3,10 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
-class Client
+class Admin
 {
-    // Método para iniciar o cliente e gerenciar a comunicação com o servidor
-    public void StartClient(string serverIP, int port)
+    // Método para iniciar o administrador e gerenciar a comunicação com o servidor
+    public void StartAdmin(string serverIP, int port)
     {
         // Estabelece uma conexão TCP com o servidor no endereço IP e porta especificados
         using TcpClient client = new TcpClient(serverIP, port);
@@ -40,8 +40,8 @@ class Client
         do
         {
             Console.WriteLine("\nMenu:");
-            Console.WriteLine("1 - Requisitar Tarefa");
-            Console.WriteLine("2 - Completar Tarefa");
+            Console.WriteLine("1 - Serviço");
+            Console.WriteLine("2 - Criar Tarefa");
             Console.WriteLine("9 - Sair");
             Console.Write("Introduza o valor ou comando: ");
             userInput = Console.ReadLine();
@@ -53,12 +53,12 @@ class Client
             switch (upperInput)
             {
                 case "1":
-                case "REQUISITAR TAREFA":
-                    command = "REQUISITAR TAREFA";
+                case "SERVICO":
+                    command = "SERVICO";
                     break;
                 case "2":
-                case "COMPLETAR TAREFA":
-                    command = "COMPLETAR TAREFA";
+                case "CRIAR TAREFA":
+                    command = "CRIAR TAREFA";
                     break;
                 case "9":
                 case "SAIR":
@@ -97,7 +97,7 @@ class Client
         int port = 12345; // A mesma porta usada no servidor
 
         // Cria uma instância do cliente e inicia a interação com o servidor
-        Client client = new Client();
-        client.StartClient(serverIP, port);
+        Admin administrador = new Admin();
+        administrador.StartAdmin(serverIP, port);
     }
 }

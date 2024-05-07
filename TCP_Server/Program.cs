@@ -1,5 +1,7 @@
-﻿using System;
+﻿using CsvHelper;
+using System;
 using System.Data.SqlClient;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -104,6 +106,20 @@ namespace TCP_Server
                         {
                             // Aloca uma nova tarefa ao cliente e retorna uma resposta
                             string response = AllocateTask(clientId);
+                            writer.WriteLine(response);
+                        }
+                    }
+                    // Se for "servico", invoca a lógica de alocar uma nova tarefa
+                    else if (line.ToLower().Equals("servico"))
+                    {
+                        if (clientId == null)
+                        {
+                            writer.WriteLine("Erro: ID do administrador não informado.");
+                        }
+                        else
+                        {
+                            // Aloca uma nova tarefa ao cliente e retorna uma resposta
+                            string response = GetServiceInfo(clientId);
                             writer.WriteLine(response);
                         }
                     }
@@ -328,6 +344,129 @@ namespace TCP_Server
             }
         }
     }
+
+    //Método para obter informações sobre o serviço
+    private string GetServiceInfo(string adminId)
+    {
+        mutex.WaitOne();
+
+        try
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string query = @"
+                SELECT S.ID_Servico, S.Descricao, S.Estado, C.ID_Cliente
+                FROM Servicos S
+                LEFT JOIN Cliente C ON S.ID_Servico = C.ID_Servico
+                WHERE S.ID_Administrador = @adminId";
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@adminId", adminId);
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string serviceId = reader["ID_Servico"].ToString();
+                            string description = reader["Descricao"].ToString();
+                            string state = reader["Estado"].ToString();
+                            string clientId = reader["ID_Cliente"] != DBNull.Value ? reader["ID_Cliente"].ToString() : "Nenhum cliente alocado";
+                            return $"ID do Serviço: {serviceId}\nDescrição: {description}\nEstado: {state}\nID do Cliente Alocado: {clientId}";
+                        }
+                        else
+                        {
+                            writer.WriteLine("Erro: Nenhum serviço encontrado para este administrador. Deseja alocar-se num novo serviço? (sim/não)?");
+                            string response = reader.ReadLine().ToLower();
+                            if (response == "sim")
+                            {
+                                // Aloca o administrador a um serviço que não tenha nenhum administrador alocado
+                                string allocateResponse = AllocateAdminToService(clientId);
+                                writer.WriteLine(allocateResponse); // Envia a resposta ao administrador
+                                if (allocateResponse.StartsWith("Sucesso"))
+                                {
+                                    // Se a alocação for bem-sucedida, obtém e envia as informações do serviço
+                                    string serviceInfo = GetServiceInfo(clientId);
+                                    writer.WriteLine(serviceInfo); // Envia as informações do serviço para o administrador
+                                }
+                            }
+                            // Se o administrador não quiser se alocar, volta para o menu
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"Erro ao localizar informações serviço: {ex.Message}";
+        }
+        finally
+        {
+            mutex.ReleaseMutex();
+        }
+    }
+
+ 
+
+
+        // Função para alocar o administrador a um serviço que não tenha nenhum administrador alocado
+        private string AllocateAdminToService(string adminId)
+        {
+            mutex.WaitOne();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = @"
+                SELECT TOP 1 ID_Servico 
+                FROM Servicos 
+                WHERE Estado = 'Nao alocado' 
+                ORDER BY NEWID()";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        object serviceId = command.ExecuteScalar();
+                        if (serviceId != null)
+                        {
+                            string updateQuery = @"
+                        UPDATE Servicos 
+                        SET ID_Administrador = @adminId 
+                        WHERE ID_Servico = @serviceId";
+                            using (SqlCommand updateCommand = new SqlCommand(updateQuery, connection))
+                            {
+                                updateCommand.Parameters.AddWithValue("@adminId", adminId);
+                                updateCommand.Parameters.AddWithValue("@serviceId", serviceId);
+                                int rowsAffected = updateCommand.ExecuteNonQuery();
+                                if (rowsAffected > 0)
+                                {
+                                    return $"Sucesso: Administrador alocado ao serviço {serviceId}.";
+                                }
+                                else
+                                {
+                                    return "Erro: Falha ao alocar o administrador a um serviço.";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            return "Erro: Nenhum serviço disponível para alocação.";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Erro ao alocar administrador: {ex.Message}";
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
+        }
+            
+        
+
 
     // Ponto de entrada principal do programa
     class Program
